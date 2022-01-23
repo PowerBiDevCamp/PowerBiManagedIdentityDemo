@@ -8,10 +8,6 @@ using Microsoft.PowerBI.Api;
 using Microsoft.PowerBI.Api.Models;
 using Newtonsoft.Json;
 
-//var azureServiceTokenProvider = new AzureServiceTokenProvider();
-//string accessToken = await azureServiceTokenProvider.GetAccessTokenAsync("https://management.azure.com/");
-// OR
-
 namespace PowerBiManagedIdentityDemo.Services {
 
   public class EmbeddedReportViewModel {
@@ -24,23 +20,19 @@ namespace PowerBiManagedIdentityDemo.Services {
   public class PowerBiServiceApi {
 
     private const string urlPowerBiServiceApiRoot = "https://api.powerbi.com/";
+    private const string powerbiApiDefaultScope = "https://analysis.windows.net/powerbi/api/.default";
 
-    public PowerBiServiceApi() {
+    public string GetAccessToken() {
+      var credential = new Azure.Identity.ManagedIdentityCredential();
+      string[] scopes = { "https://analysis.windows.net/powerbi/api/.default" };
+      var token = credential.GetToken(new Azure.Core.TokenRequestContext(scopes));
+      return token.Token;
     }
 
-    public const string powerbiApiDefaultScope = "https://analysis.windows.net/powerbi/api/.default";
-
-public string GetAccessToken() {
-  var credential = new Azure.Identity.ManagedIdentityCredential();
-  string[] scopes = { "https://analysis.windows.net/powerbi/api/.default" };
-  var token = credential.GetToken(new Azure.Core.TokenRequestContext(scopes));
-  return token.Token;
-}
-
-public PowerBIClient GetPowerBiClient() {
-  var tokenCredentials = new TokenCredentials(GetAccessToken(), "Bearer");
-  return new PowerBIClient(new Uri(urlPowerBiServiceApiRoot), tokenCredentials);
-}
+    public PowerBIClient GetPowerBiClient() {
+      var tokenCredentials = new TokenCredentials(GetAccessToken(), "Bearer");
+      return new PowerBIClient(new Uri(urlPowerBiServiceApiRoot), tokenCredentials);
+    }
 
     public async Task<EmbeddedReportViewModel> GetReport(Guid WorkspaceId, Guid ReportId) {
 
